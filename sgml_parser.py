@@ -1,3 +1,7 @@
+"""
+sgml_parser
+"""
+
 import sgmllib
 import string
 import re

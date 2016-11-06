@@ -1,6 +1,15 @@
+"""
+query
+"""
+
+
 import argparse
-import filestuff
+import cPickle as pickle
 import pprint
+
+import filestuff
+import ranking
+
 
 class QueryObject:
 
@@ -116,24 +125,22 @@ class QueryObject:
         return result, err
 
 
-def prepare_query(q):
-    result, err = q1.run_query(q)
-    print(q + '->')
-    if len(result):
-        print(result)
-        print(str(len(result)) + " found " )
-    else:
-        print(err)
+# def prepare_query(q):
+#     q1= QueryObject('./blocks/index.txt')
+#     result, err = q1.run_query(q)
+#     print(q + '->')
+#     if len(result):
+#         print(result)
+#         print(str(len(result)) + " found " )
+#     else:
+#         print(err)
 
 
-def get_query_results(q):
-    print(q)
-    q1= QueryObject('./blocks/index.txt')
-    result, err = q1.run_query(q)
+def get_query_results(q_string, q_object):
+    # q1= QueryObject('./blocks/index.txt')
+    result, err = q_object.run_query(q_string)
     # print(q + '->')
     if len(result):
-        # print(result)
-        # print(str(len(result)) + " found " )
         return result
     else:
         print(err)
@@ -162,3 +169,82 @@ def get_query_results(q):
 #             prepare_query(query)
 #         except:
 #             print("No input detected")
+
+
+############# QUERY ######################
+parser = argparse.ArgumentParser(description='query', add_help=False)
+parser.add_argument("-q","--query")
+args = parser.parse_args()
+
+# init index to use for querying
+# final_index = QueryObject('./blocks/index.txt')
+# final_index, final_postings_count = filestuff.read_index_into_memory('./blocks/index.txt')
+
+# load document lengths used for ranking
+with open('doc_lengths.p','rb') as fp:
+    doc_length_dict = pickle.load(fp)
+
+N = len(doc_length_dict) 
+
+print("Doc length dict:=======================")
+pprint.pprint(doc_length_dict)
+print "N: ", N
+
+# get Lave (document length average)
+temp_doc_len_sum = 0
+for d in doc_length_dict:
+    print(d, ":", doc_length_dict[d])
+    temp_doc_len_sum += doc_length_dict[d]
+
+doc_len_ave = temp_doc_len_sum /  N
+
+
+
+# print("INDEX")
+# pprint.pprint(final_index)
+
+# if query passed as argument, run query
+# otherwise, loop to allow user to run queries
+
+if args.query:
+    q1= QueryObject('./blocks/index.txt')
+    q_string = args.query
+    doc_results = get_query_results(q_string, q1)
+
+    ################ RANKING ####################
+    k = 1
+    b = 0.5
+    ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index)
+
+else:
+    q1= QueryObject('./blocks/index.txt')
+    while True:
+        print("Enter query separated by AND(or spaces) | OR:")
+        q_string = raw_input(">")
+        try:
+            # query.prepare_query(q)
+            doc_results = get_query_results(q_string, q1)
+            print(doc_results)
+            print(str(len(doc_results)) + " found " )
+        except:
+            print("No input detected")
+
+        ################ RANKING ####################
+
+        # Ld -> doc_length_dict {'10001':2,'10002':3}
+        # Lave -> doc_len_ave
+
+        """
+        k: positive tuning parameter that calibrates tftd (document term frequency)
+            k = 0 ;binary model- no term frequency
+            large k value corresponds to using raw term frequency
+
+        b: scaling by document length
+            0 <= b <= 1
+            b= 1 ; fully scaling the term weight by doc length
+            b = 0; no length normalization
+        """
+
+        k = 1
+        b = 0.5
+        ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index)

@@ -183,6 +183,17 @@ except:
 # Ld -> doc_length_dict {'10001':2,'10002':3}
 # Lave -> doc_len_ave
 
+"""
+k: positive tuning parameter that calibrates tftd (document term frequency)
+	k = 0 ;binary model- no term frequency
+	large k value corresponds to using raw term frequency
+
+b: scaling by document length
+	0 <= b <= 1
+	b= 1 ; fully scaling the term weight by doc length
+	b = 0; no length normalization
+"""
+
 k = 1
 b = 0.5
 

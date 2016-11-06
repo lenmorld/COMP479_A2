@@ -1,3 +1,9 @@
+"""
+SPIMI()
+
+input: token_stream - list of tokens - (term, docID) pair
+"""
+
 from collections import OrderedDict
 import sys
 import linecache
@@ -6,23 +12,7 @@ import ast
 
 import filestuff
 
-# def add_to_dictionary(dictionary, term):
-#     dictionary[term] = []
-#     return dictionary[term]
-#
-# def add_to_postings_list(postings_list, docID):
-#     if docID not in postings_list:
-#         postings_list.insert(0,docID)
-#
-# def get_postings_list(dictionary, term):
-#     return dictionary[term]
 
-
-"""
-SPIMI()
-
-input: token_stream - list of tokens - (term, docID) pair
-"""
 def SPIMI(token_stream, block_size):
     print("block_size: " + str(block_size))
     spimi_files = []

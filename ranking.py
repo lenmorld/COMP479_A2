@@ -1,12 +1,28 @@
+"""
+ranking
+"""
+
+
+
 import math
+
+
+"""
+calculates RSV for each document, aggregate in a RSV dictionary
+
+inputs:
+q - query string
+docs - docs which are the result of the query
+N - number of docs in the colletion
+doc_length_dict - doc. lengths in a dictionary data structure
+Lave - average length of all documents
+k - positive tuning parameter that calibrates tftd scaling
+b - tuning parameter for document length
+
+"""
 
 def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index):
 	RSVd = {}
-
-	# RSVd['10001'] = 0.9
-	# RSVd['10002'] = 0.8 
-
-	
 
 	terms = q.split()
 
@@ -16,8 +32,6 @@ def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index):
 	for d in docs_list:
 
 		Ld = doc_length_dict[d]
-
-		# RSVd[d] = 0			
 		
 		# calculate RSV for this document
 
@@ -28,12 +42,13 @@ def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index):
 			dft = len(postings)
 
 			tftd = 0
+
+			# get tftd 
 			for posting in postings:
 				for k1,v in posting.iteritems():
 					# print "postings:"
 					# print k, ':', v
 					# print "docID", d
-
 					if k1 == d:
 						tftd = v
 
@@ -44,19 +59,16 @@ def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index):
 			# dft = int(dft)
 			# tftd = int(tftd)
 
-
 			print type(k), type(b), type(Ld), type(Lave), type(tftd), type(dft), type(N)
-
 
 			idf = ( math.log10 ( N/dft ) )
 			tftd_norm = ((k+1) + tftd ) / ( (k * ((1-b) + (b * (Ld/Lave)))  ) + tftd)
-
 			tf_idf =  idf / tftd_norm
-
 			tf_idf_sum += tf_idf
 
 		RSVd[d] = tf_idf_sum
 
-
 	for d in RSVd:
 		print d, "_", RSVd[d]
+
+	return RSVd

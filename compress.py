@@ -1,3 +1,12 @@
+"""
+compress.py
+
+contains methods to compress final index, including removing numbers, case-folding, stemming
+and removing stop words
+"""
+
+
+
 from normalize import *
 import collections
 # import nltk
@@ -6,6 +15,8 @@ import collections
 import pprint
 # import string
 
+
+# removes punctuations, linefeed/carriage return and other non-alphanumeric characters
 def remove_weird_things(words):         # remove punctuations, line breaks, whitespace, etc
     punctuations = '!"#$%&\'()*+,./:;<=>?@[\\]^_`{|}~'
 
