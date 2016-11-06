@@ -1,5 +1,6 @@
 import argparse
 import filestuff
+import pprint
 
 class QueryObject:
 
@@ -11,10 +12,26 @@ class QueryObject:
         if len(term_list) >1:
             # get postings of first term
 
-            try:
-                temp_postings = index[term_list[0]]       # initialize with first term's docs
+            # [{'21004': 1}, {'21005': 1}]
+
+            try:    
+                temp_postings_LoD = index[term_list[0]]       # initialize with first term's docs
+
+                # because of changes in data structure
+                # before ['21005','21004']
+                # now
+                # cat and dog
+                # cat=[{'21004': 1}, {'21005': 1}]
+                # dog=[{'21005': 1}, {'21006': 1}]
+
+                # this simply discards v in each k:v  [{'21004': 1}, {'21005': 1}] -> ['21004','21005']
+                temp_postings = list({k for d in temp_postings_LoD for k in d.keys()})
+
             except KeyError:
                 temp_postings = list()
+
+            print("FUCK")
+            print(temp_postings)
 
             and_postings = temp_postings                 
             and_postings_multiple = [temp_postings, ]     # accumulate intersection of documents per level ,e.g 1 doc, 2 docs 'and-ed', 3 docs 'and-ed', ...
@@ -28,8 +45,12 @@ class QueryObject:
             # to do that, we have to know the intersection and union at each level, in which level means incresing number of documents we are intersecting
 
             for t in term_list:
+
                 try:
-                    temp_term = index[t]
+                    temp_term_LoD = index[t]    # [{'21004': 1}, {'21005': 1}]
+                    # this simply discards v in each k:v  [{'21004': 1}, {'21005': 1}] -> ['21004','21005']
+                    temp_term = list({k for d in temp_term_LoD for k in d.keys()})
+
                 except KeyError:
                     temp_term = list()
 
@@ -64,7 +85,7 @@ class QueryObject:
     def run_query(self, query):
         index = self.index
         q_split = query.split()
- 
+
         err = ''
         if len(q_split) == 1:   # single word query
             try:
@@ -95,34 +116,49 @@ class QueryObject:
         return result, err
 
 
-def prepare_query():
-    result, err = q1.run_query(query)
-    print(query + '->')
-    if len(result) > 1:
+def prepare_query(q):
+    result, err = q1.run_query(q)
+    print(q + '->')
+    if len(result):
         print(result)
         print(str(len(result)) + " found " )
     else:
         print(err)
 
-############# MAIN ######################
-parser = argparse.ArgumentParser(description='query', add_help=False)
-parser.add_argument("-q","--query")
-args = parser.parse_args()
 
-# init index to use for querying
-q1= QueryObject('./blocks/index.txt')
+def get_query_results(q):
+    print(q)
+    q1= QueryObject('./blocks/index.txt')
+    result, err = q1.run_query(q)
+    # print(q + '->')
+    if len(result):
+        # print(result)
+        # print(str(len(result)) + " found " )
+        return result
+    else:
+        print(err)
+        return err
 
-# if query passed as argument, run query
-# otherwise, loop to allow user to run queries
-if args.query:
-    query = args.query
-    prepare_query()
 
-else:
-    while True:
-        print("Enter query separated by AND(or spaces) | OR:")
-        query = raw_input(">")
-        try:
-            prepare_query()
-        except:
-            print("No input detected")
+# ############# MAIN ######################
+# parser = argparse.ArgumentParser(description='query', add_help=False)
+# parser.add_argument("-q","--query")
+# args = parser.parse_args()
+
+# # init index to use for querying
+# q1= QueryObject('./blocks/index.txt')
+
+# # if query passed as argument, run query
+# # otherwise, loop to allow user to run queries
+# if args.query:
+#     query = args.query
+#     prepare_query(query)
+
+# else:
+#     while True:
+#         print("Enter query separated by AND(or spaces) | OR:")
+#         query = raw_input(">")
+#         try:
+#             prepare_query(query)
+#         except:
+#             print("No input detected")
