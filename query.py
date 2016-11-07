@@ -185,6 +185,8 @@ def get_query_results(q_string, q_object):
 ############# QUERY ######################
 parser = argparse.ArgumentParser(description='query', add_help=False)
 parser.add_argument("-q","--query")
+parser.add_argument("-k", "--k")
+parser.add_argument("-b", "--b")
 args = parser.parse_args()
 
 # init index to use for querying
@@ -217,6 +219,16 @@ doc_len_ave = temp_doc_len_sum /  N
 # if query passed as argument, run query
 # otherwise, loop to allow user to run queries
 
+if args.k:
+    k = float(args.k)
+else:
+    k = 0.5
+
+if args.b:
+    b = float(args.b)
+else:
+    b = 0.5
+
 if args.query:
     q1= QueryObject('./blocks/index.txt')
     q_string = args.query
@@ -226,8 +238,8 @@ if args.query:
     print(doc_results)
 
     ################ RANKING ####################
-    k = 1
-    b = 0.5
+    # k = 1
+    # b = 0.5
     RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index)
 
     for d in RSVd:
@@ -262,8 +274,8 @@ else:
             b = 0; no length normalization
         """
 
-        k = 1
-        b = 0.5
+        # k = 1
+        # b = 0.5
         RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index)
 
         for d in RSVd:

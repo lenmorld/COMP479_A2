@@ -172,9 +172,6 @@ def write_block_to_disk(sorted_terms, file_count):
     return out_file
 
 def block_merge(block_filenames, index_file):
-
-    raw_input()
-
     block_count = len(block_filenames)
     # index_file = './blocks/index.txt'
 

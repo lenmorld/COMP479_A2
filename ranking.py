@@ -62,8 +62,8 @@ def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index):
 			print d, ':' , t, " DFT: " + str(dft), " TFTD: " + str(tftd)
 
 			idf = ( math.log10 ( N/dft ) )
-			tftd_norm = ((k+1) + tftd ) / ( (k * ((1-b) + (b * (Ld/Lave)))  ) + tftd)
-			tf_idf =  idf / tftd_norm
+			tftd_norm = ((k+1) * tftd ) / ( (k * ((1-b) + (b * (Ld/Lave)) )  ) + tftd)
+			tf_idf =  idf * tftd_norm
 			tf_idf_sum += tf_idf
 
 		RSVd[d] = tf_idf_sum
