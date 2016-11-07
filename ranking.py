@@ -1,5 +1,20 @@
 """
 ranking
+
+ranks the gathered documents using BM25 algorithm
+BM25 provides a rank for each document (RSVd) based on the terms in the query
+
+overview: RSVd = idf * tftd_len.norm
+
+idf : inverse document frequency, which attenuates effect of terms that occur too often
+tftd : term frequency with length normalization that depends on 2 constants
+
+k - positive tuning parameter that calibrates term frequency scaling
+b - tuning parameter for document length
+
+If a term occurs in over half the documents in the collecction, this formula would not
+give a negative weight, which is desirable.
+
 """
 
 
@@ -8,6 +23,8 @@ import math
 
 
 """
+get_rvsd
+
 calculates RSV for each document, aggregate in a RSV dictionary
 
 inputs:

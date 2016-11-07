@@ -1,9 +1,13 @@
 """
 buildindex.py
+
+o   Builds index using SPIMI and compression methods, and block size as a parameter
+o   After getting documents from the collection, this module iterates through all documents and collects all (term, docID) pairs
+o   Multiple indexes can be generated with different levels of compression
 """
 
 import nltk
-# import pprint
+import pprint
 import argparse
 import cPickle as pickle
 
@@ -39,12 +43,14 @@ print ("Using block size " + str(block_size))
 
 tokens_list = []
 doc_path = './docs'
-docs = filestuff.get_reuters(doc_path)
+docs, sgm_docID_map = filestuff.get_reuters(doc_path)
 index_file = './blocks/index.txt'
 
 doc_ctr = 0
 doc_len_ave = 0
 doc_length_dict = {}
+
+# pprint.pprint(sgm_docID_map)
 
 # do for each file in the collection
 for docID,doc in docs.iteritems():

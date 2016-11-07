@@ -34,14 +34,88 @@ def SPIMI(token_stream, block_size):
         temp_doc_dict = {}
 
         if term in dictionary:
-            # e.g. 'apple' = {'200': 1, '202': 3}
+            # if docID not in dictionary[term]:
+            # e.g. 'apple'= [{200:1}, {202:3}]
+
+            # if docID is already in postings list
+
+            # 'apple' = {'200': 1, '202': 3}
+
             try:
-                dictionary[term][docID] += 1         # increment tftd, this would fail if docID is not in the postings list yet
+                dictionary[term][docID] += 1
                 # print term, "incremented"
-            except:                                  # adds docID to postings list, init tftd to 1
+            except:
                 # print("Key error")
                 dictionary[term][docID] = 1
-        else:                                       # if term not in dict yet, create postings list, add first docID, init tftd to 1
+
+            # if any(docID in posting for posting in dictionary[term]):       # if docID is already in postings list
+                # dictionary[term].append(docID)
+
+                # print term
+                # print 'before', dictionary[term] 
+
+                # 'apple'= [{200:1}, {202:3}]
+                # -> {'apple': {'201': 3, '200': 2}}
+
+
+
+                #################################################
+
+                # temp_json = json.dumps(dictionary[term]) 
+                # temp_json = temp_json.replace("{","")
+                # temp_json = temp_json.replace("}","")
+                # temp_json = temp_json.replace("[","{")
+                # temp_json = temp_json.replace("]","}")
+                # temp_json = "{'" + term  + "':" + temp_json + '}'
+
+                # new_dict = ast.literal_eval(temp_json)
+
+                # try:
+                #     new_dict[term][docID] += 1
+                #     print term, "incremented"
+                # except:
+                #     print("Key error")
+
+                # back = str(list(new_dict[term].iteritems()))
+                # back = back.replace("(","{")
+                # back = back.replace(")","}")
+                # back = back.replace("',","':")
+
+                # dictionary[term] = ast.literal_eval(back)
+
+                ##################################################
+
+                # for d in dictionary[term]:              # add 1 to tf for the matching docID  
+                       
+                #     try:
+                #         d[docID] += 1
+                #         break
+                #     except:
+                #         continue
+
+
+
+                # print 'after', dictionary[term]
+
+                    
+                    # doc, tf in d.iteritems()
+                    # if doc == docID:
+                    #     d = {doc: tf+1}
+                    #     break
+
+                # d.update((doc, tf+1) for doc, tf in d.iteritems() if doc == docID )    
+
+                # # dictionary[term][docID] += 1                # add 1 to tf
+                # for d in dictionary[term]:
+                #     print 'before', d
+                #     d.update((doc, tf+1) for doc, tf in d.iteritems() if doc == docID )    # add 1 to tf for the matching docID
+                #     print 'after', d
+            # else:
+            #     dictionary[term][docID] = 1
+                # dictionary[term] = {docID:1}
+                # dictionary[term].append({docID:1})              # else add docID to postings list
+        else:
+            # dictionary[term] = [{docID:1}]      # initialize tf to 0
             dictionary[term] = {}
             dictionary[term][docID] = 1
 
@@ -58,12 +132,8 @@ def SPIMI(token_stream, block_size):
 
     return spimi_files
 
-"""
-ListOfDictionaries to DictionaryOfDictionaries
-"""
-def LoD_to_DoD(LoD, term):  
-    # do some string manipulation and duck-typing to convert list to dictionary
 
+def LoD_to_DoD(LoD, term):
     temp_json = json.dumps(LoD) 
     temp_json = temp_json.replace("{","")
     temp_json = temp_json.replace("}","")
@@ -75,15 +145,15 @@ def LoD_to_DoD(LoD, term):
 
     return new_dict
 
-"""
-DictionaryOfDictionaries to ListOfDictionaries
-"""
 def DoD_to_LoD(DoD):
-    # gather all k,v pairs from dictionary, put in a list
     LoD = []
     for k,v in DoD.iteritems():
         LoD.append({k:v})
+
+    # print(LoD)
+    # raw_input()
     return LoD    
+
 
 
 def sort_terms(dictionary):
@@ -94,7 +164,6 @@ def sort_terms(dictionary):
 
     return dictionary_sorted
 
-
 def write_block_to_disk(sorted_terms, file_count):
     out_file = './blocks/block' + str(file_count) + '.txt'
     with open(out_file, "w") as out_file:
@@ -104,11 +173,6 @@ def write_block_to_disk(sorted_terms, file_count):
             out_file.write(str(item) + "=" + str(sorted_terms[item]) + "\n")
     return out_file
 
-"""
-block_merge
-
-
-"""
 def block_merge(block_filenames, index_file):
     block_count = len(block_filenames)
     # index_file = './blocks/index.txt'
@@ -150,22 +214,26 @@ def block_merge(block_filenames, index_file):
                 min_line = min(lines, key=lambda t:t['term'])   # get minimum based on term
                 min_block_id = min_line['blockID']                  # get blockID
 
-                # disect entry into term and postings
-                # e.g. moore={'17966': 1, '1854': 1, '18906': 2, '8080': 3}
+                #disect entry into term and postings
+
+                # workers:[{200:1}, {202:3}]
                 t_split = min_line['term'].split('=')
                 d_term = t_split[0]
                 # print(min_line['term'])
                 # print(t_split[1])
-                
-                # make it a full dictionary
-                dict1 = "{1:" + str(t_split[1]) + "}"
-                dict1 = ast.literal_eval(dict1)
-                # print(dict1[1])
 
-                # collect k,v pairs, add to list
+                
+                # {'21002': 3, '21004': 2, '21005': 2, '21006': 2}
+                back = "{1:" + str(t_split[1]) + "}"
+                back = ast.literal_eval(back)
+                # print(back[1])
+                # convert back[1] to list
                 postings = []
-                for k,v in dict1[1].iteritems():
-                    postings.append({k:v}) 
+                for k,v in back[1].iteritems():
+                    postings.append({k:v})
+                # postings = back[1]       #  convert postings string to list e.g. '[{200:1}, {202:3}]\n' -> [{200:1}, {202:3}]   
+
+                # BEFORE: convert postings string to list e.g. '[7,9]\n' -> [7,9]
 
                 for l in lines:
                     if l['blockID'] != min_block_id:
@@ -178,11 +246,11 @@ def block_merge(block_filenames, index_file):
 
                         # postings_other = ast.literal_eval(t_split_other[1])         # convert postings string to list e.g. '[7,9]\n' -> [7,9]
                         # {'21002': 3, '21004': 2, '21005': 2, '21006': 2}
-                        dict1 = "{1:" +  str(t_split_other[1]) + "}"
-                        dict1 = ast.literal_eval(dict1)
-                        # postings_other = dict1[1]      #  convert postings string to list e.g. '[{200:1}, {202:3}]\n' -> [{200:1}, {202:3}]   
+                        back = "{1:" +  str(t_split_other[1]) + "}"
+                        back = ast.literal_eval(back)
+                        # postings_other = back[1]      #  convert postings string to list e.g. '[{200:1}, {202:3}]\n' -> [{200:1}, {202:3}]   
                         postings_other = []
-                        for k,v in dict1[1].iteritems():
+                        for k,v in back[1].iteritems():
                             postings_other.append({k:v})
 
 
@@ -191,6 +259,8 @@ def block_merge(block_filenames, index_file):
 
 
                         if d_term == d_term_other:   # similar term: min term and one of the others
+                            # postings = postings + postings_other    # merge them -> this would keep duplicates
+
 
                             # convert postings, postings_other to dict so easier to handle
                             postings_dict_d = LoD_to_DoD(postings, d_term)
@@ -201,6 +271,7 @@ def block_merge(block_filenames, index_file):
                                 print postings_dict_d
                                 print "postings_others_d"
                                 print postings_other_d
+
 
                             union_d = {}
 
@@ -225,6 +296,7 @@ def block_merge(block_filenames, index_file):
                                 print "union_d"
                                 print union_d
                                 
+
                             # union = postings + list(set(postings_other) - set(postings))          # this would be an effective set union
                             line_ctrs[other_block_id] += 1          # make this other posting point to next line
                             min_line['term'] = str(d_term) + "=" + str(union) + "\n"
@@ -236,6 +308,11 @@ def block_merge(block_filenames, index_file):
                 index.append(final_posting)                     # add to final_index
                 index_f.write(final_posting)                    # write to file
 
+                # sorted_lines.append(min_line)                   # TESTING - add to in-memory list
                 line_ctrs[min_block_id] += 1                    # increment pointer to this block to next line (posting)
+
+            # print 'min: ', min_line
+    #pprint.pprint(sorted_lines)    #in-memory
+    #pprint.pprint(index)           #FILE
 
     return index_file

@@ -1,5 +1,7 @@
 """
 filestuff
+
+o   Handles getting files in a specified directory and file type, preparing files for writing, loading index file to memory
 """
 
 from os import listdir
@@ -18,12 +20,14 @@ def get_files(doc_path, file_ext):
     return file_types
 
 def get_reuters(doc_path):
+    sgm_docID_map = {}
     reuter_files = get_files(doc_path, '.sgm')
     docs = {}
     for reuter_file in reuter_files:
         new_docs = sgml_parser.extract(open(reuter_file))
         docs = dict(docs.items() + new_docs.items())
-    return docs
+        sgm_docID_map[reuter_file] = docs.keys()
+    return docs, sgm_docID_map
 
 def read_index_into_memory(index_file):
     index = OrderedDict()

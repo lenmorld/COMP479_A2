@@ -1,7 +1,21 @@
 """
 query
-"""
 
+parameters:
+[-k k]      [k value for BM25 algorithm]
+[-b b]      [value for BM25 algorithm]
+[-q query] 
+
+if no k,b passed, defaults will be used
+
+o   Allows user to run one query by passing a query as a parameter, 
+or running the script without parameters which loops to accept and process queries
+
+o   Involves creating a QueryObject that holds the index loaded from memory. 
+This improves performance if program is ran interactively (loop), because the index is loaded once to memory, 
+and can be used to process queries until user stops program
+
+"""
 
 import argparse
 import cPickle as pickle
@@ -16,6 +30,11 @@ class QueryObject:
     def __init__(self, index_file):
         self.index, self.postings_count  = filestuff.read_index_into_memory(index_file)
 
+    """
+    query_list
+
+    prccess OR, AND queries, handling OR in a special way
+    """
     @staticmethod
     def query_list(index, term_list, op):
         if len(term_list) >1:
@@ -25,19 +44,9 @@ class QueryObject:
 
             try:    
                 temp_postings_LoD = index[term_list[0]]       # initialize with first term's docs
-
-                # because of changes in data structure
-                # before ['21005','21004']
-                # now
-                # cat and dog
-                # cat=[{'21004': 1}, {'21005': 1}]
-                # dog=[{'21005': 1}, {'21006': 1}]
-
                 # this simply discards v in each k:v  [{'21004': 1}, {'21005': 1}] -> ['21004','21005']
                 temp_postings = list({k for d in temp_postings_LoD for k in d.keys()})
-
                 # print(temp_postings)
-
             except KeyError:
                 temp_postings = list()
 
@@ -54,6 +63,7 @@ class QueryObject:
             # to do that, we have to know the intersection and union at each level, in which level means incresing number of documents we are intersecting
 
             print(term_list)
+
             for t in term_list:
 
                 try:
@@ -64,11 +74,7 @@ class QueryObject:
                 except KeyError:
                     temp_term = list()
 
-                # print t
-                # print "+++++++++++++++++++++++"
-                # print set(and_postings) 
-                # print set(temp_term)
-                # print list(set(and_postings) & set(temp_term))
+                # before: print list(set(and_postings) & set(temp_term))
 
                 and_postings = list(set(and_postings) & set(temp_term))
                 and_postings_multiple.insert(0, and_postings)           # add the intersection of this much documents to the head of the list
@@ -92,15 +98,17 @@ class QueryObject:
                     for item in or_postings_m:                     # for each union, get the list items
                         if item not in list_collector:              # instead of simply appending which will cause duplicates (and forced ordering for sets)
                             list_collector.append(item)             # we carefully append to the end of the final list, if item is not there yet
-
-
                 return list_collector
 
         else:
             return index[term_list]
 
 
+    """
+    run_query
 
+    process passed query, separate terms in the query and invokes query_list to query index
+    """
     def run_query(self, query):
         index = self.index
         q_split = query.split()
@@ -135,16 +143,6 @@ class QueryObject:
                     err = "one or all of the terms not found"
         return result, err
 
-
-# def prepare_query(q):
-#     q1= QueryObject('./blocks/index.txt')
-#     result, err = q1.run_query(q)
-#     print(q + '->')
-#     if len(result):
-#         print(result)
-#         print(str(len(result)) + " found " )
-#     else:
-#         print(err)
 
 
 def get_query_results(q_string, q_object):
