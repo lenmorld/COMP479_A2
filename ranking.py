@@ -20,7 +20,7 @@ give a negative weight, which is desirable.
 
 
 import math
-
+import operator
 
 """
 get_rvsd
@@ -38,14 +38,10 @@ b - tuning parameter for document length
 
 """
 
-def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index):
+def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index, j):
 	RSVd = {}
 
-	print(q)
-	print(docs)
 	terms = q.split()
-	print(terms)
-	raw_input()
 
 	# this simply discards v in each k:v  [{'21004': 1}, {'21005': 1}] -> ['21004','21005']
 	try:
@@ -76,7 +72,7 @@ def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index):
 					# print "docID", d
 					if k1 == d:
 						tftd = v
-			print d, ':' , t, " DFT: " + str(dft), " TFTD: " + str(tftd)
+			# print d, ':' , t, " DFT: " + str(dft), " TFTD: " + str(tftd)
 
 			idf = ( math.log10 ( N/dft ) )
 			tftd_norm = ((k+1) * tftd ) / ( (k * ((1-b) + (b * (Ld/Lave)) )  ) + tftd)
@@ -88,4 +84,7 @@ def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index):
 	# for d in RSVd:
 	# 	print d, "_", RSVd[d]
 
-	return RSVd
+	# get top values
+	top_j = dict(sorted(RSVd.iteritems(), key=operator.itemgetter(1), reverse=True)[:j])
+
+	return top_j

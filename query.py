@@ -30,18 +30,11 @@ class QueryObject:
     def __init__(self, index_file):
         self.index, self.postings_count  = filestuff.read_index_into_memory(index_file)
 
-    """
-    query_list
 
-    prccess OR, AND queries, handling OR in a special way
-    """
     @staticmethod
-    def query_list(index, term_list, op):
+    def query_rank(index, term_list):
         if len(term_list) >1:
             # get postings of first term
-
-            # [{'21004': 1}, {'21005': 1}]
-
             try:    
                 temp_postings_LoD = index[term_list[0]]       # initialize with first term's docs
                 # this simply discards v in each k:v  [{'21004': 1}, {'21005': 1}] -> ['21004','21005']
@@ -50,104 +43,41 @@ class QueryObject:
             except KeyError:
                 temp_postings = list()
 
-            and_postings = temp_postings                 
-            and_postings_multiple = [temp_postings, ]     # accumulate intersection of documents per level ,e.g 1 doc, 2 docs 'and-ed', 3 docs 'and-ed', ...
-            or_postings = temp_postings                  
-            or_postings_multiple = [temp_postings, ]      # accumulate union of documents per level ,e.g 1 doc, 2 docs 'and-ed', 3 docs 'and-ed', ...
-
-
-            #### doing OR with priority on the Intersections ###
-            # to process OR, we need to order documents by how many keywords they contain
-            # e.g. for a 3 word query, the first in the list should be the ones that contain all 3 keywords (i.e. the intersection of all 3)
-            #       then the intersection of just 2 docs, and lastly the other docs that has either of the 3 but no intersection
-            # to do that, we have to know the intersection and union at each level, in which level means incresing number of documents we are intersecting
+            or_postings = temp_postings  
 
             print(term_list)
-
             for t in term_list:
-
                 try:
                     temp_term_LoD = index[t]    # [{'21004': 1}, {'21005': 1}]
                     # this simply discards v in each k:v  [{'21004': 1}, {'21005': 1}] -> ['21004','21005']
                     temp_term = list({k for d in temp_term_LoD for k in d.keys()})
-
                 except KeyError:
                     temp_term = list()
 
-                # before: print list(set(and_postings) & set(temp_term))
-
-                and_postings = list(set(and_postings) & set(temp_term))
-                and_postings_multiple.insert(0, and_postings)           # add the intersection of this much documents to the head of the list
-                                                                        # at the end of the loop, we will have the intersection of all (or most) docs at the start of the list
                 or_postings = list(set(or_postings) | set(temp_term))
-                or_postings_multiple.insert(0, or_postings)
 
-            
-
-            if op == 'AND':
-                return and_postings
-            elif op == 'OR':
-                # we want to put first the ones that have their intersection
-                list_collector = []
-                for and_postings_m in and_postings_multiple:        # go through all intersections, starting with the most 'encompassing' one
-                    for item in and_postings_m:                     # for each intersection, get the list items
-                        if item not in list_collector:              # instead of simply appending which will cause duplicates (and forced ordering for sets)
-                            list_collector.append(item)             # we carefully append to the end of the final list, if item is not there yet
-
-                for or_postings_m in or_postings_multiple:         # go through all unions, starting with the most 'encompassing' one
-                    for item in or_postings_m:                     # for each union, get the list items
-                        if item not in list_collector:              # instead of simply appending which will cause duplicates (and forced ordering for sets)
-                            list_collector.append(item)             # we carefully append to the end of the final list, if item is not there yet
-                return list_collector
+            return or_postings
 
         else:
-            return index[term_list]
+            return index[term_list[0]]
 
-
-    """
-    run_query
-
-    process passed query, separate terms in the query and invokes query_list to query index
-    """
-    def run_query(self, query):
+    def run_ranked_query(self, query):
         index = self.index
-        q_split = query.split()
-
+        q_terms = query.split() 
         err = ''
-        if len(q_split) == 1:   # single word query
-            try:
-                # query = query.lower()                  # enable this if index is case-folded
-                print(query)
-                result = index[query]
-            except KeyError:
-                result = list()
-                err = "term not found"
-        else:                   # multiple query, separated by AND | OR
-            if 'OR' in query:
-                # multiple words query - cat OR dog
-                q_terms = query.split(' OR ')
-                # q_terms = [q.lower() for q in q_terms]                    # enable this if index is case-folded
-                result = QueryObject.query_list(index, q_terms, 'OR')
-            # elif 'AND' in query:
-            else:       # default to AND if seperated by spaces or explicit AND
-
-                if 'AND' in query:
-                    q_terms = query.split(' AND ')
-                else:
-                    q_terms = query.split()
-                # q_terms = [q.lower() for q in q_terms]                     # enable this if index is case-folded
-                try:
-                    result = QueryObject.query_list(index, q_terms, 'AND')
-                except KeyError:
-                    result = list()
-                    err = "one or all of the terms not found"
+        try:
+            result = QueryObject.query_rank(index, q_terms)       
+        except KeyError:
+            result = list()
+            err = "no documents found"
         return result, err
-
-
 
 def get_query_results(q_string, q_object):
     # q1= QueryObject('./blocks/index.txt')
-    result, err = q_object.run_query(q_string)
+    # result, err = q_object.run_query(q_string)
+
+    result, err = q_object.run_ranked_query(q_string)
+
     # print(q + '->')
     if len(result):
         return result
@@ -232,13 +162,13 @@ if args.query:
     q_string = args.query
     doc_results = get_query_results(q_string, q1)
 
-    print("results")
-    print(doc_results)
+    # print("results")
+    # print(doc_results)
 
     ################ RANKING ####################
     # k = 1
     # b = 0.5
-    RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index)
+    RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index, 10)
 
     for d in RSVd:
         print d, "_", RSVd[d]
@@ -274,7 +204,7 @@ else:
 
         # k = 1
         # b = 0.5
-        RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index)
+        RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index, 10)
 
         for d in RSVd:
             print d, "_", RSVd[d]
