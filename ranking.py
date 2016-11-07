@@ -36,6 +36,8 @@ def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index):
 	except:
 		docs_list = docs
 
+	# print(docs)
+
 	for d in docs_list:
 
 		Ld = doc_length_dict[d]

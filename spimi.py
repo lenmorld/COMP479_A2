@@ -236,21 +236,28 @@ def block_merge(block_filenames, index_file):
 
                 # BEFORE: convert postings string to list e.g. '[7,9]\n' -> [7,9]
 
-
                 for l in lines:
                     if l['blockID'] != min_block_id:
                         other_block_id = l['blockID']
                         t_split_other = l['term'].split('=')
                         d_term_other = t_split_other[0]
 
+                        if d_term == 'supercomputers' :
+                            print l
+
                         # postings_other = ast.literal_eval(t_split_other[1])         # convert postings string to list e.g. '[7,9]\n' -> [7,9]
                         # {'21002': 3, '21004': 2, '21005': 2, '21006': 2}
-                        back = "{1:" + str(t_split_other[1]) + "}"
+                        back = "{1:" +  str(t_split_other[1]) + "}"
                         back = ast.literal_eval(back)
                         # postings_other = back[1]      #  convert postings string to list e.g. '[{200:1}, {202:3}]\n' -> [{200:1}, {202:3}]   
                         postings_other = []
                         for k,v in back[1].iteritems():
                             postings_other.append({k:v})
+
+
+                        if d_term == 'supercomputers' :
+                            print postings_other
+
 
                         if d_term == d_term_other:   # similar term: min term and one of the others
                             # postings = postings + postings_other    # merge them -> this would keep duplicates
@@ -259,6 +266,13 @@ def block_merge(block_filenames, index_file):
                             # convert postings, postings_other to dict so easier to handle
                             postings_dict_d = LoD_to_DoD(postings, d_term)
                             postings_other_d = LoD_to_DoD(postings_other, d_term)
+
+                            if d_term == 'supercomputers' :
+                                print "postings_d"
+                                print postings_dict_d
+                                print "postings_others_d"
+                                print postings_other_d
+
 
                             union_d = {}
 
@@ -276,9 +290,19 @@ def block_merge(block_filenames, index_file):
 
                             union = DoD_to_LoD(union_d)
 
+
+                            if d_term == 'supercomputers' :
+                                print "union"
+                                print union
+                                print "union_d"
+                                print union_d
+                                
+
                             # union = postings + list(set(postings_other) - set(postings))          # this would be an effective set union
                             line_ctrs[other_block_id] += 1          # make this other posting point to next line
                             min_line['term'] = str(d_term) + "=" + str(union) + "\n"
+
+                            postings = union
 
                 postings = sorted(postings)
                 final_posting = str(d_term) + "=" + str(postings) + "\n"

@@ -26,7 +26,6 @@ class QueryObject:
             try:    
                 temp_postings_LoD = index[term_list[0]]       # initialize with first term's docs
 
-
                 # because of changes in data structure
                 # before ['21005','21004']
                 # now
@@ -37,16 +36,16 @@ class QueryObject:
                 # this simply discards v in each k:v  [{'21004': 1}, {'21005': 1}] -> ['21004','21005']
                 temp_postings = list({k for d in temp_postings_LoD for k in d.keys()})
 
+                # print(temp_postings)
 
             except KeyError:
                 temp_postings = list()
-
-            print(temp_postings)
 
             and_postings = temp_postings                 
             and_postings_multiple = [temp_postings, ]     # accumulate intersection of documents per level ,e.g 1 doc, 2 docs 'and-ed', 3 docs 'and-ed', ...
             or_postings = temp_postings                  
             or_postings_multiple = [temp_postings, ]      # accumulate union of documents per level ,e.g 1 doc, 2 docs 'and-ed', 3 docs 'and-ed', ...
+
 
             #### doing OR with priority on the Intersections ###
             # to process OR, we need to order documents by how many keywords they contain
@@ -54,6 +53,7 @@ class QueryObject:
             #       then the intersection of just 2 docs, and lastly the other docs that has either of the 3 but no intersection
             # to do that, we have to know the intersection and union at each level, in which level means incresing number of documents we are intersecting
 
+            print(term_list)
             for t in term_list:
 
                 try:
@@ -64,12 +64,20 @@ class QueryObject:
                 except KeyError:
                     temp_term = list()
 
+                # print t
+                # print "+++++++++++++++++++++++"
+                # print set(and_postings) 
+                # print set(temp_term)
+                # print list(set(and_postings) & set(temp_term))
+
                 and_postings = list(set(and_postings) & set(temp_term))
                 and_postings_multiple.insert(0, and_postings)           # add the intersection of this much documents to the head of the list
                                                                         # at the end of the loop, we will have the intersection of all (or most) docs at the start of the list
-                
                 or_postings = list(set(or_postings) | set(temp_term))
                 or_postings_multiple.insert(0, or_postings)
+
+            
+
             if op == 'AND':
                 return and_postings
             elif op == 'OR':
@@ -84,6 +92,7 @@ class QueryObject:
                     for item in or_postings_m:                     # for each union, get the list items
                         if item not in list_collector:              # instead of simply appending which will cause duplicates (and forced ordering for sets)
                             list_collector.append(item)             # we carefully append to the end of the final list, if item is not there yet
+
 
                 return list_collector
 
@@ -212,6 +221,9 @@ if args.query:
     q1= QueryObject('./blocks/index.txt')
     q_string = args.query
     doc_results = get_query_results(q_string, q1)
+
+    print("results")
+    print(doc_results)
 
     ################ RANKING ####################
     k = 1
