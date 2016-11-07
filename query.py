@@ -26,6 +26,7 @@ class QueryObject:
             try:    
                 temp_postings_LoD = index[term_list[0]]       # initialize with first term's docs
 
+
                 # because of changes in data structure
                 # before ['21005','21004']
                 # now
@@ -36,10 +37,10 @@ class QueryObject:
                 # this simply discards v in each k:v  [{'21004': 1}, {'21005': 1}] -> ['21004','21005']
                 temp_postings = list({k for d in temp_postings_LoD for k in d.keys()})
 
+
             except KeyError:
                 temp_postings = list()
 
-            print("FUCK")
             print(temp_postings)
 
             and_postings = temp_postings                 
@@ -112,6 +113,7 @@ class QueryObject:
                 result = QueryObject.query_list(index, q_terms, 'OR')
             # elif 'AND' in query:
             else:       # default to AND if seperated by spaces or explicit AND
+
                 if 'AND' in query:
                     q_terms = query.split(' AND ')
                 else:
@@ -186,14 +188,14 @@ with open('doc_lengths.p','rb') as fp:
 
 N = len(doc_length_dict) 
 
-print("Doc length dict:=======================")
-pprint.pprint(doc_length_dict)
+# print("Doc length dict:=======================")
+# pprint.pprint(doc_length_dict)
 print "N: ", N
 
 # get Lave (document length average)
 temp_doc_len_sum = 0
 for d in doc_length_dict:
-    print(d, ":", doc_length_dict[d])
+    # print(d, ":", doc_length_dict[d])
     temp_doc_len_sum += doc_length_dict[d]
 
 doc_len_ave = temp_doc_len_sum /  N
@@ -214,7 +216,10 @@ if args.query:
     ################ RANKING ####################
     k = 1
     b = 0.5
-    ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index)
+    RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index)
+
+    for d in RSVd:
+        print d, "_", RSVd[d]
 
 else:
     q1= QueryObject('./blocks/index.txt')
@@ -247,4 +252,7 @@ else:
 
         k = 1
         b = 0.5
-        ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index)
+        RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index)
+
+        for d in RSVd:
+            print d, "_", RSVd[d]

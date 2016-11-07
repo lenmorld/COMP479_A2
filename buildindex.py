@@ -52,11 +52,11 @@ for docID,doc in docs.iteritems():
     try:    
         int(docID)
         doc_ctr += 1
-        print("NewId: " + docID)
-        print("Doc: " + doc)
-        print("next doc===============================")
+        # print("NewId: " + docID)
+        # print("Doc: " + doc)
+        # print("next doc===============================")
     except:
-        print("no body")
+        # print("no body")
         continue
 
     terms = nltk.word_tokenize (doc)                      # tokenize SGM doc to a list
@@ -88,10 +88,11 @@ print("N: " + str(doc_ctr))
 
 temp_doc_len_sum = 0
 for d in doc_length_dict:
-    print(d, ":", doc_length_dict[d])
+    # print(d, ":", doc_length_dict[d])
     temp_doc_len_sum += doc_length_dict[d]
 
 doc_len_ave = temp_doc_len_sum /  doc_ctr
+
 
 # at this point, we have the token stream #
 

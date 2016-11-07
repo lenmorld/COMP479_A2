@@ -24,10 +24,17 @@ b - tuning parameter for document length
 def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index):
 	RSVd = {}
 
+	print(q)
+	print(docs)
 	terms = q.split()
+	print(terms)
+	raw_input()
 
 	# this simply discards v in each k:v  [{'21004': 1}, {'21005': 1}] -> ['21004','21005']
-	docs_list = list({key for d in docs for key in d.keys()})
+	try:
+		docs_list = list({key for d in docs for key in d.keys()})
+	except:
+		docs_list = docs
 
 	for d in docs_list:
 
@@ -37,7 +44,6 @@ def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index):
 
 		tf_idf_sum = 0			# init. tf_idf sum to 0
 		for t in terms:
-			print(t)
 			postings = index[t]
 			dft = len(postings)
 
@@ -51,15 +57,7 @@ def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index):
 					# print "docID", d
 					if k1 == d:
 						tftd = v
-
-			print d, ':' , t			
-			print "DFT: " + str(dft)
-			print "TFTD: " + str(tftd)
-
-			# dft = int(dft)
-			# tftd = int(tftd)
-
-			print type(k), type(b), type(Ld), type(Lave), type(tftd), type(dft), type(N)
+			print d, ':' , t, " DFT: " + str(dft), " TFTD: " + str(tftd)
 
 			idf = ( math.log10 ( N/dft ) )
 			tftd_norm = ((k+1) + tftd ) / ( (k * ((1-b) + (b * (Ld/Lave)))  ) + tftd)
@@ -68,7 +66,7 @@ def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index):
 
 		RSVd[d] = tf_idf_sum
 
-	for d in RSVd:
-		print d, "_", RSVd[d]
+	# for d in RSVd:
+	# 	print d, "_", RSVd[d]
 
 	return RSVd

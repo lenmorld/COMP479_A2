@@ -9,6 +9,7 @@ import sys
 import linecache
 # import pprint
 import ast
+import json
 
 import filestuff
 
@@ -28,20 +29,93 @@ def SPIMI(token_stream, block_size):
         term = token["term"]
         docID = token["docID"]
 
+        temp_doc_dict = {}
+
         if term in dictionary:
             # if docID not in dictionary[term]:
             # e.g. 'apple'= [{200:1}, {202:3}]
-            if any(docID in posting for posting in dictionary[term]):       # if docID is already in postings list
+
+            # if docID is already in postings list
+
+            # 'apple' = {'200': 1, '202': 3}
+
+            try:
+                dictionary[term][docID] += 1
+                # print term, "incremented"
+            except:
+                # print("Key error")
+                dictionary[term][docID] = 1
+
+            # if any(docID in posting for posting in dictionary[term]):       # if docID is already in postings list
                 # dictionary[term].append(docID)
 
-                # dictionary[term][docID] += 1                # add 1 to tf
+                # print term
+                # print 'before', dictionary[term] 
 
-                for d in dictionary[term]:
-                    d.update((doc, tf+1) for doc, tf in d.iteritems() if doc == docID )    # add 1 to tf for the matching docID
-            else:
-                dictionary[term].append({docID:1})              # else add docID to postings list
+                # 'apple'= [{200:1}, {202:3}]
+                # -> {'apple': {'201': 3, '200': 2}}
+
+
+
+                #################################################
+
+                # temp_json = json.dumps(dictionary[term]) 
+                # temp_json = temp_json.replace("{","")
+                # temp_json = temp_json.replace("}","")
+                # temp_json = temp_json.replace("[","{")
+                # temp_json = temp_json.replace("]","}")
+                # temp_json = "{'" + term  + "':" + temp_json + '}'
+
+                # new_dict = ast.literal_eval(temp_json)
+
+                # try:
+                #     new_dict[term][docID] += 1
+                #     print term, "incremented"
+                # except:
+                #     print("Key error")
+
+                # back = str(list(new_dict[term].iteritems()))
+                # back = back.replace("(","{")
+                # back = back.replace(")","}")
+                # back = back.replace("',","':")
+
+                # dictionary[term] = ast.literal_eval(back)
+
+                ##################################################
+
+                # for d in dictionary[term]:              # add 1 to tf for the matching docID  
+                       
+                #     try:
+                #         d[docID] += 1
+                #         break
+                #     except:
+                #         continue
+
+
+
+                # print 'after', dictionary[term]
+
+                    
+                    # doc, tf in d.iteritems()
+                    # if doc == docID:
+                    #     d = {doc: tf+1}
+                    #     break
+
+                # d.update((doc, tf+1) for doc, tf in d.iteritems() if doc == docID )    
+
+                # # dictionary[term][docID] += 1                # add 1 to tf
+                # for d in dictionary[term]:
+                #     print 'before', d
+                #     d.update((doc, tf+1) for doc, tf in d.iteritems() if doc == docID )    # add 1 to tf for the matching docID
+                #     print 'after', d
+            # else:
+            #     dictionary[term][docID] = 1
+                # dictionary[term] = {docID:1}
+                # dictionary[term].append({docID:1})              # else add docID to postings list
         else:
-            dictionary[term] = [{docID:1}]      # initialize tf to 0
+            # dictionary[term] = [{docID:1}]      # initialize tf to 0
+            dictionary[term] = {}
+            dictionary[term][docID] = 1
 
         # if it becomes too big for the block size, or it is the last document (indicated by the last token)
         if (sys.getsizeof(dictionary) > block_size) or (token_ctr >= token_count) :
@@ -55,6 +129,28 @@ def SPIMI(token_stream, block_size):
             # print("------------ wrote to block# " + str(spimi_file_count) + "------------------")
 
     return spimi_files
+
+
+def LoD_to_DoD(LoD, term):
+    temp_json = json.dumps(LoD) 
+    temp_json = temp_json.replace("{","")
+    temp_json = temp_json.replace("}","")
+    temp_json = temp_json.replace("[","{")
+    temp_json = temp_json.replace("]","}")
+    temp_json = "{'" + term  + "':" + temp_json + '}'
+
+    new_dict = ast.literal_eval(temp_json)
+
+    return new_dict
+
+def DoD_to_LoD(DoD):
+    LoD = []
+    for k,v in DoD.iteritems():
+        LoD.append({k:v})
+
+    # print(LoD)
+    # raw_input()
+    return LoD    
 
 
 
@@ -76,6 +172,8 @@ def write_block_to_disk(sorted_terms, file_count):
     return out_file
 
 def block_merge(block_filenames, index_file):
+
+    raw_input()
 
     block_count = len(block_filenames)
     # index_file = './blocks/index.txt'
@@ -124,8 +222,17 @@ def block_merge(block_filenames, index_file):
                 d_term = t_split[0]
                 # print(min_line['term'])
                 # print(t_split[1])
+
                 
-                postings = ast.literal_eval(t_split[1])     #  convert postings string to list e.g. '[{200:1}, {202:3}]\n' -> [{200:1}, {202:3}]   
+                # {'21002': 3, '21004': 2, '21005': 2, '21006': 2}
+                back = "{1:" + str(t_split[1]) + "}"
+                back = ast.literal_eval(back)
+                # print(back[1])
+                # convert back[1] to list
+                postings = []
+                for k,v in back[1].iteritems():
+                    postings.append({k:v})
+                # postings = back[1]       #  convert postings string to list e.g. '[{200:1}, {202:3}]\n' -> [{200:1}, {202:3}]   
 
                 # BEFORE: convert postings string to list e.g. '[7,9]\n' -> [7,9]
 
@@ -135,13 +242,43 @@ def block_merge(block_filenames, index_file):
                         other_block_id = l['blockID']
                         t_split_other = l['term'].split('=')
                         d_term_other = t_split_other[0]
-                        postings_other = ast.literal_eval(t_split_other[1])         # convert postings string to list e.g. '[7,9]\n' -> [7,9]
+
+                        # postings_other = ast.literal_eval(t_split_other[1])         # convert postings string to list e.g. '[7,9]\n' -> [7,9]
+                        # {'21002': 3, '21004': 2, '21005': 2, '21006': 2}
+                        back = "{1:" + str(t_split_other[1]) + "}"
+                        back = ast.literal_eval(back)
+                        # postings_other = back[1]      #  convert postings string to list e.g. '[{200:1}, {202:3}]\n' -> [{200:1}, {202:3}]   
+                        postings_other = []
+                        for k,v in back[1].iteritems():
+                            postings_other.append({k:v})
 
                         if d_term == d_term_other:   # similar term: min term and one of the others
                             # postings = postings + postings_other    # merge them -> this would keep duplicates
-                            postings = postings + list(set(postings_other) - set(postings))          # this would be an effective set union
+
+
+                            # convert postings, postings_other to dict so easier to handle
+                            postings_dict_d = LoD_to_DoD(postings, d_term)
+                            postings_other_d = LoD_to_DoD(postings_other, d_term)
+
+                            union_d = {}
+
+                            for k,v in postings_dict_d[d_term].iteritems():
+                                if k in union_d:   # if already there, add
+                                    union_d[k] += v
+                                else:
+                                    union_d[k] = v
+
+                            for k,v in postings_other_d[d_term].iteritems():
+                                if k in union_d:   # if already there, add
+                                    union_d[k] += v
+                                else:
+                                    union_d[k] = v
+
+                            union = DoD_to_LoD(union_d)
+
+                            # union = postings + list(set(postings_other) - set(postings))          # this would be an effective set union
                             line_ctrs[other_block_id] += 1          # make this other posting point to next line
-                            min_line['term'] = str(d_term) + ":" + str(postings) + "\n"
+                            min_line['term'] = str(d_term) + "=" + str(union) + "\n"
 
                 postings = sorted(postings)
                 final_posting = str(d_term) + "=" + str(postings) + "\n"
