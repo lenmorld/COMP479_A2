@@ -87,7 +87,6 @@ for docID, doc in docs.iteritems():
 	# print(terms)
 	# print("Length")
 	# print(len(terms))
-
 	# raw_input()
 
 	# collect all term,docID pairs to a list

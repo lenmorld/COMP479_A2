@@ -1,5 +1,8 @@
 """
 sgml_parser
+
+o   Obtains the contents of <body> and <title> tags from a .sgm file.
+o   Update for A2: also get newID attribute for each <reuter></reuter>  
 """
 
 import sgmllib

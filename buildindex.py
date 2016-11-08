@@ -1,9 +1,13 @@
 """
 buildindex.py
+
+o   Builds index using SPIMI and compression methods, and block size as a parameter
+o   After getting documents from the collection, this module iterates through all documents and collects all (term, docID) pairs
+o   Multiple indexes can be generated with different levels of compression
 """
 
 import nltk
-# import pprint
+import pprint
 import argparse
 import cPickle as pickle
 
@@ -39,12 +43,14 @@ print ("Using block size " + str(block_size))
 
 tokens_list = []
 doc_path = './docs'
-docs = filestuff.get_reuters(doc_path)
+docs, sgm_docID_map = filestuff.get_reuters(doc_path)
 index_file = './blocks/index.txt'
 
 doc_ctr = 0
 doc_len_ave = 0
 doc_length_dict = {}
+
+# pprint.pprint(sgm_docID_map)
 
 # do for each file in the collection
 for docID,doc in docs.iteritems():
@@ -52,11 +58,11 @@ for docID,doc in docs.iteritems():
     try:    
         int(docID)
         doc_ctr += 1
-        print("NewId: " + docID)
-        print("Doc: " + doc)
-        print("next doc===============================")
+        # print("NewId: " + docID)
+        # print("Doc: " + doc)
+        # print("next doc===============================")
     except:
-        print("no body")
+        # print("no body")
         continue
 
     terms = nltk.word_tokenize (doc)                      # tokenize SGM doc to a list
@@ -88,10 +94,11 @@ print("N: " + str(doc_ctr))
 
 temp_doc_len_sum = 0
 for d in doc_length_dict:
-    print(d, ":", doc_length_dict[d])
+    # print(d, ":", doc_length_dict[d])
     temp_doc_len_sum += doc_length_dict[d]
 
 doc_len_ave = temp_doc_len_sum /  doc_ctr
+
 
 # at this point, we have the token stream #
 
