@@ -52,11 +52,9 @@ def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index, j):
 	# print(docs)
 
 	for d in docs_list:
-
 		Ld = doc_length_dict[d]
 		
 		# calculate RSV for this document
-
 		tf_idf_sum = 0			# init. tf_idf sum to 0
 		for t in terms:
 			postings = index[t]

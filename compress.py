@@ -5,8 +5,6 @@ contains methods to compress final index, including removing numbers, case-foldi
 and removing stop words
 """
 
-
-
 from normalize import *
 import collections
 # import nltk
@@ -40,6 +38,7 @@ def case_folding(words):
     # processed_words = [w.lower() for w in words ]
     # return processed_words
 
+
 def remove_stop_words(token_list, num):
     # stops = set(stopwords.words("english"))
     words = []
@@ -61,6 +60,12 @@ def remove_stop_words(token_list, num):
         if w not in stop_words:
             token_obj = {"term":w,"docID":d}
             processed_words.append(token_obj)
+
+    # write stop words to a file
+    # with open("stop_words.txt", "w") as f2:
+    #     f2.write(str(stop_words))
+
+
     return processed_words
 
     # processed_words = [w for w in words if w not in stop_words]

@@ -20,6 +20,8 @@ and can be used to process queries until user stops program
 import argparse
 import cPickle as pickle
 import pprint
+import string
+from nltk.corpus import stopwords
 
 import filestuff
 import ranking
@@ -64,6 +66,7 @@ class QueryObject:
     def run_ranked_query(self, query):
         index = self.index
         q_terms = query.split() 
+
         err = ''
         try:
             result = QueryObject.query_rank(index, q_terms)       
@@ -71,6 +74,56 @@ class QueryObject:
             result = list()
             err = "no documents found"
         return result, err
+
+
+"""
+compress_query
+
+remove weird things
+remove numbers
+case-fold
+remove stop-words 
+"""
+def compress_query(q_string):
+
+    # STOP LIST, hand-filtered to remove needed words such as ['company']
+
+    stop_words = ['the', 'of', 'to', 'in', 'and', 'said', 'a', 'for', 'mln', 'it', 'dlrs', 'on', 'reuter', 'pct', 'is', \
+    'that', 'from', 'by', 'its', 'will', 'be', 'vs', 'at', 'with', 'was', 'year', 'he', 'billion', 'has', 'us', 'as', 'an', \
+    'would', 'cts', 'not', 'inc', 'bank', 'net', 'which', 'but', 'new', 'are', 'corp', 'this', 'have', 'were', 'last', \
+    'market', 'had', 'stock', 'loss', 'or', 'shares', 'also', 'one', 'about', 'they', 'up', 'share', 'trade', 'been', 'two', \
+    'co', 'oil', 'shr', 'may', 'sales', 'more', 'first', 'debt', 'government', 'april', 'after', 'exchange', 'march', 'than', \
+    'group', 'other', 'over', 'prices', 'banks', 'we', 'japan', 'profit', 'price', 'dlr', 'their', 'per', 'no', 'international', \
+    'ltd', 'foreign', 'some', 'interest', 'rate', 'told', 'agreement', 'if', 'could', 'under', 'week', 'three', 'tonnes', 'securities', \
+    'february', 'quarter', 'today', 'president', 'against', 'expected', 'there', 'qtr', 'all', 'dollar', 'offer', 'tax', 'unit', \
+    'due', 'five', 'revs', 'total', 'financial', 'years', 'common', 'economic', 'world', 'january', 'into', 'rates', 'trading', \
+    'added', 'production', 'board', 'rose', 'increase', 'japanese', 'because', 'month', 'meeting', 'capital', 'issue', 'between', \
+    'officials', 'current', 'american', 'spokesman', 'when', 'record', 'industry']
+
+    # add nltk stop words, for a total of 304
+    stop_words += set(stopwords.words("english"))
+
+
+    table = string.maketrans("","")                                 # make table of things to filter
+    q_string = q_string.translate(table, string.punctuation)        # remove punctuations and weird things in query terms
+
+
+    temp = q_string.split()
+
+    q_string_list = []
+    for t in temp:
+        if not t.isdigit() and t not in stop_words:
+            q_string_list.append(t.lower())
+
+    # q_string = [w for w in temp if not w.isdigit()]                 # remove numbers
+    # q_string = q_string.lower()                                     # case fold
+    # temp = q_string.split()
+    # terms = [t for t in temp if t not in stop_words]                # remove stop words
+
+    q_string = " ".join(q_string_list)
+
+    return q_string
+
 
 def get_query_results(q_string, q_object):
     # q1= QueryObject('./blocks/index.txt')
@@ -86,30 +139,7 @@ def get_query_results(q_string, q_object):
         return err
 
 
-# ############# MAIN ######################
-# parser = argparse.ArgumentParser(description='query', add_help=False)
-# parser.add_argument("-q","--query")
-# args = parser.parse_args()
-
-# # init index to use for querying
-# q1= QueryObject('./blocks/index.txt')
-
-# # if query passed as argument, run query
-# # otherwise, loop to allow user to run queries
-# if args.query:
-#     query = args.query
-#     prepare_query(query)
-
-# else:
-#     while True:
-#         print("Enter query separated by AND(or spaces) | OR:")
-#         query = raw_input(">")
-#         try:
-#             prepare_query(query)
-#         except:
-#             print("No input detected")
-
-
+# MAIN
 ############# QUERY ######################
 parser = argparse.ArgumentParser(description='query', add_help=False)
 parser.add_argument("-q","--query")
@@ -117,9 +147,6 @@ parser.add_argument("-k", "--k")
 parser.add_argument("-b", "--b")
 args = parser.parse_args()
 
-# init index to use for querying
-# final_index = QueryObject('./blocks/index.txt')
-# final_index, final_postings_count = filestuff.read_index_into_memory('./blocks/index.txt')
 
 # load document lengths used for ranking
 with open('doc_lengths.p','rb') as fp:
@@ -138,7 +165,6 @@ for d in doc_length_dict:
     temp_doc_len_sum += doc_length_dict[d]
 
 doc_len_ave = temp_doc_len_sum /  N
-
 
 
 # print("INDEX")
@@ -160,18 +186,32 @@ else:
 if args.query:
     q1= QueryObject('./blocks/index.txt')
     q_string = args.query
+    q_string = compress_query(q_string)
     doc_results = get_query_results(q_string, q1)
 
     # print("results")
     # print(doc_results)
 
     ################ RANKING ####################
+
+    # Ld -> doc_length_dict {'10001':2,'10002':3}
+    # Lave -> doc_len_ave
+
+    """
+    k: positive tuning parameter that calibrates tftd (document term frequency)
+        k = 0 ;binary model- no term frequency
+        large k value corresponds to using raw term frequency
+
+    b: scaling by document length
+        0 <= b <= 1
+        b= 1 ; fully scaling the term weight by doc length
+        b = 0; no length normalization
+    """
+
     # k = 1
     # b = 0.5
-    RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index, 10)
 
-    for d in RSVd:
-        print d, "_", RSVd[d]
+    RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index, 10)
 
 else:
     q1= QueryObject('./blocks/index.txt')
@@ -180,31 +220,25 @@ else:
         q_string = raw_input(">")
         try:
             # query.prepare_query(q)
+            q_string = compress_query(q_string)
             doc_results = get_query_results(q_string, q1)
             print(doc_results)
             print(str(len(doc_results)) + " found " )
         except:
             print("No input detected")
 
-        ################ RANKING ####################
-
-        # Ld -> doc_length_dict {'10001':2,'10002':3}
-        # Lave -> doc_len_ave
-
-        """
-        k: positive tuning parameter that calibrates tftd (document term frequency)
-            k = 0 ;binary model- no term frequency
-            large k value corresponds to using raw term frequency
-
-        b: scaling by document length
-            0 <= b <= 1
-            b= 1 ; fully scaling the term weight by doc length
-            b = 0; no length normalization
-        """
-
         # k = 1
         # b = 0.5
         RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index, 10)
 
-        for d in RSVd:
-            print d, "_", RSVd[d]
+# sort results by the ranking
+top_docs = sorted(RSVd, key=RSVd.__getitem__, reverse=True)
+
+# for d in RSVd:
+#     print d, "_", RSVd[d]
+
+# for rank in sorted:
+    # print RSVd[d], "_", rank
+
+for doc in top_docs:
+    print("{} : {}".format(doc, RSVd[doc]))
