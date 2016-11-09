@@ -8,4 +8,4 @@ with open('doc_lengths.p','rb') as fp:
 
 with open('doc_lengths.txt', 'w') as fp:
 	for d in doc_length_dict:
-		fp.write(str(d) + '\n')
+		fp.write(str(d) + ':' + str(doc_length_dict[d]) + '\n')
