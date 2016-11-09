@@ -39,6 +39,7 @@ b - tuning parameter for document length
 """
 
 def get_rsvd(q, docs, N, doc_length_dict, Lave, k, b, index, j):
+	print "Doc length avg: ", Lave
 	RSVd = {}
 
 	terms = q.split()

@@ -103,16 +103,17 @@ def compress_query(q_string):
     # add nltk stop words, for a total of 304
     stop_words += set(stopwords.words("english"))
 
+    # table = string.maketrans("","")                                 # make table of things to filter
+    # q_string = q_string.translate(table, string.punctuation)        # remove punctuations and weird things in query terms
 
-    table = string.maketrans("","")                                 # make table of things to filter
-    q_string = q_string.translate(table, string.punctuation)        # remove punctuations and weird things in query terms
-
+    punctuations = '!"#$%&\'()*+,./:;<=>?@[\\]^_`{|}~'
 
     temp = q_string.split()
 
     q_string_list = []
     for t in temp:
         if not t.isdigit() and t not in stop_words:
+            t = t.translate(None, punctuations)
             q_string_list.append(t.lower())
 
     # q_string = [w for w in temp if not w.isdigit()]                 # remove numbers
@@ -145,6 +146,7 @@ parser = argparse.ArgumentParser(description='query', add_help=False)
 parser.add_argument("-q","--query")
 parser.add_argument("-k", "--k")
 parser.add_argument("-b", "--b")
+parser.add_argument("-t", "--top")
 args = parser.parse_args()
 
 
@@ -183,6 +185,11 @@ if args.b:
 else:
     b = 0.5
 
+if args.top:
+    t = int(args.top)
+else:
+    t = 10
+
 if args.query:
     q1= QueryObject('./blocks/index.txt')
     q_string = args.query
@@ -206,12 +213,20 @@ if args.query:
         0 <= b <= 1
         b= 1 ; fully scaling the term weight by doc length
         b = 0; no length normalization
+
+    t: top t documents
     """
 
     # k = 1
     # b = 0.5
 
-    RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index, 10)
+    RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index, t)
+
+    # sort results by the ranking
+    top_docs = sorted(RSVd, key=RSVd.__getitem__, reverse=True)
+
+    for doc in top_docs:
+        print("{} : {}".format(doc, RSVd[doc]))
 
 else:
     q1= QueryObject('./blocks/index.txt')
@@ -222,23 +237,19 @@ else:
             # query.prepare_query(q)
             q_string = compress_query(q_string)
             doc_results = get_query_results(q_string, q1)
-            print(doc_results)
+            # print(doc_results)
             print(str(len(doc_results)) + " found " )
+
+            # k = 1
+            # b = 0.5
+            RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index, t)
+
+            # sort results by the ranking
+            top_docs = sorted(RSVd, key=RSVd.__getitem__, reverse=True)
+
+            for doc in top_docs:
+                print("{} : {}".format(doc, RSVd[doc]))
+            
         except:
             print("No input detected")
 
-        # k = 1
-        # b = 0.5
-        RSVd = ranking.get_rsvd(q_string, doc_results, N, doc_length_dict, doc_len_ave, k, b, q1.index, 10)
-
-# sort results by the ranking
-top_docs = sorted(RSVd, key=RSVd.__getitem__, reverse=True)
-
-# for d in RSVd:
-#     print d, "_", RSVd[d]
-
-# for rank in sorted:
-    # print RSVd[d], "_", rank
-
-for doc in top_docs:
-    print("{} : {}".format(doc, RSVd[doc]))

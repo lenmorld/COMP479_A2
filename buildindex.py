@@ -56,7 +56,9 @@ stop_words = ['the', 'of', 'to', 'in', 'and', 'said', 'a', 'for', 'mln', 'it', '
  'officials', 'current', 'american', 'spokesman', 'when', 'record', 'industry']
 
 # add nltk stop words, for a total of 304
-stop_words += set(stopwords.words("english"))
+unicode_sw = stopwords.words("english")
+str_sw = [str(sw) for sw in unicode_sw]
+stop_words += str_sw
 
 # get all reuters docs and accumulate all term, docID pairs
 
