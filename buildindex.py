@@ -99,18 +99,10 @@ for docID,doc in docs.iteritems():
 print("N: " + str(doc_ctr))
 
 
-# Eliminate stop words from Doc before and after indexing
-# pprint.pprint("Length with stop words: ")
-# pprint.pprint(tokens_list)
-# print(len(tokens_list))
 
 ### we don't need this if the stop words are already eliminated before even forming the tokens_list
 # tokens_list = compress.remove_stop_words(tokens_list, 30)       # 4 remove 30 most common words
 # tokens_list = compress.remove_stop_words(tokens_list, 150)        # 5 remove 30 most common words
-
-# pprint.pprint("Length without stop words: ")
-# pprint.pprint(tokens_list)
-# print(len(tokens_list))
 
 
 # doc length array and doc length average

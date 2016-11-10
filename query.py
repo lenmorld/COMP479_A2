@@ -61,7 +61,11 @@ class QueryObject:
             return or_postings
 
         else:
-            return index[term_list[0]]
+            try:
+                result = index[term_list[0]]
+            except KeyError:
+                result = list()
+            return result
 
     def run_ranked_query(self, query):
         index = self.index
@@ -116,10 +120,6 @@ def compress_query(q_string):
             t = t.translate(None, punctuations)
             q_string_list.append(t.lower())
 
-    # q_string = [w for w in temp if not w.isdigit()]                 # remove numbers
-    # q_string = q_string.lower()                                     # case fold
-    # temp = q_string.split()
-    # terms = [t for t in temp if t not in stop_words]                # remove stop words
 
     q_string = " ".join(q_string_list)
 
@@ -156,9 +156,8 @@ with open('doc_lengths.p','rb') as fp:
 
 N = len(doc_length_dict) 
 
-# print("Doc length dict:=======================")
-# pprint.pprint(doc_length_dict)
-print "N: ", N
+
+### print "N: ", N
 
 # get Lave (document length average)
 temp_doc_len_sum = 0
@@ -168,9 +167,7 @@ for d in doc_length_dict:
 
 doc_len_ave = temp_doc_len_sum /  N
 
-
-# print("INDEX")
-# pprint.pprint(final_index)
+### print "Doc length avg: ", doc_len_ave
 
 # if query passed as argument, run query
 # otherwise, loop to allow user to run queries
@@ -195,6 +192,8 @@ if args.query:
     q_string = args.query
     q_string = compress_query(q_string)
     doc_results = get_query_results(q_string, q1)
+
+    print str(len(doc_results)) + " found; ", "Displaying top",t, ":"
 
     # print("results")
     # print(doc_results)
@@ -238,7 +237,7 @@ else:
             q_string = compress_query(q_string)
             doc_results = get_query_results(q_string, q1)
             # print(doc_results)
-            print(str(len(doc_results)) + " found " )
+            print str(len(doc_results)) + " found; ", "Displaying top",t, ":"
 
             # k = 1
             # b = 0.5
@@ -249,7 +248,7 @@ else:
 
             for doc in top_docs:
                 print("{} : {}".format(doc, RSVd[doc]))
-            
+
         except:
             print("No input detected")
 
